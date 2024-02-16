@@ -69,24 +69,7 @@ public class DepthLimited extends Thread {
             newGameState.activePlayersRoundStart = newGameState.activePlayers.clone();
             String nextHistory = game.nextChanceHistory(newGameState, history);
             newGameState.currentPlayer = -1;
-            rollouts.updatePlayer = updatePlayer;
-            String key = newGameState.commuintyCards[0] + nextHistory;
-            float[] depth_utils = new float[3];
-            float depthUtil = 0;
-            if(!cfrThread.depthRegrets.containsKey(key)) {
-                cfrThread.depthRegrets.put(key, new float[]{0.33f, 0.33f, 0.33f});
-            }
-            float[] depth_regrets = cfrThread.depthRegrets.get(key);
-            float[] depth_strategy = NodeUtils.getStrategy(depth_regrets);
-            for (int i = 0; i < 3; i++) {
-                GameState nextGameState = new GameState(newGameState);
-                depth_utils[i] = rollouts.walkTree(nextHistory, nextGameState, i);
-                depthUtil += (depth_strategy[i] * depth_utils[i]);
-            }
-            for (int i = 0; i < 3; i++) {
-                depth_regrets[i] += (depth_utils[i] - depthUtil);
-            }
-            return depthUtil;
+            return depthUtil(newGameState, nextHistory);
         }
         gameState.currentPlayer = GameUtils.nextPlayer(gameState.activePlayers, gameState.currentPlayer);
         short[] actions = game.legalActions(gameState, history);
@@ -139,5 +122,25 @@ public class DepthLimited extends Thread {
             nodeUtil = walkTree(nextHistories[action_idx], newGameState);
         }
         return nodeUtil;
+    }
+    private float depthUtil(GameState newGameState, String nextHistory){
+        rollouts.updatePlayer = updatePlayer;
+        String key = newGameState.commuintyCards[0] + nextHistory;
+        float[] depth_utils = new float[3];
+        float depthUtil = 0;
+        if(!cfrThread.depthRegrets.containsKey(key)) {
+            cfrThread.depthRegrets.put(key, new float[]{0.33f, 0.33f, 0.33f});
+        }
+        float[] depth_regrets = cfrThread.depthRegrets.get(key);
+        float[] depth_strategy = NodeUtils.getStrategy(depth_regrets);
+        for (int i = 0; i < 3; i++) {
+            GameState nextGameState = new GameState(newGameState);
+            depth_utils[i] = rollouts.walkTree(nextHistory, nextGameState, i);
+            depthUtil += (depth_strategy[i] * depth_utils[i]);
+        }
+        for (int i = 0; i < 3; i++) {
+            depth_regrets[i] += (depth_utils[i] - depthUtil);
+        }
+        return depthUtil;
     }
 }
