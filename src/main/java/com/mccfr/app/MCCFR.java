@@ -11,7 +11,6 @@ import java.util.Arrays;
 
 public class MCCFR extends Thread {
     private static final int NUM_PLAYERS = CONSTANTS.NUM_PLAYERS;
-//    public String startingHistory;
     private final Leduc game;
     private final CFRThread cfrThread;
     private int updatePlayer = 0;
@@ -21,7 +20,7 @@ public class MCCFR extends Thread {
     public MCCFR(CFRThread cfrThread, Leduc game){
         this.cfrThread = cfrThread;
         this.game = game;
-        this.rollouts = new Rollouts(game);
+        this.rollouts = new Rollouts(cfrThread, game);
         System.out.println("starting...");
     }
 
@@ -70,8 +69,7 @@ public class MCCFR extends Thread {
             newGameState.activePlayersRoundStart = newGameState.activePlayers.clone();
             String nextHistory = game.nextChanceHistory(newGameState, history);
             newGameState.currentPlayer = -1;
-            rollouts.updatePlayer = updatePlayer;
-            return rollouts.walkTree(nextHistory, newGameState, 0);
+            return walkTree(nextHistory, newGameState);
         }
         gameState.currentPlayer = GameUtils.nextPlayer(gameState.activePlayers, gameState.currentPlayer);
         short[] actions = game.legalActions(gameState, history);
@@ -84,7 +82,6 @@ public class MCCFR extends Thread {
         }
         if(!cfrThread.actionNames.containsKey(key)){
             String[] actionNames = new String[actions.length];
-            System.out.println(Arrays.toString(actionNames));
             for (int i = 0; i < actions.length; i++) {
                 actionNames[i] = Leduc.betAmount2String.get(actions[i]);
             }

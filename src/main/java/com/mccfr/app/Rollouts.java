@@ -14,11 +14,11 @@ public class Rollouts extends Thread {
     private static final int NUM_PLAYERS = CONSTANTS.NUM_PLAYERS;
     protected int updatePlayer = 0;
     int iterations = 100000;
+    CFRThread cfrThread;
     Leduc game;
-    Map<String, float[]> blueprint = Databases.loadBlueprint("Leduc.json");
 
-    public Rollouts(Leduc game){
-//        this.cfrThread = cfrThread;
+    public Rollouts(CFRThread cfrThread, Leduc game){
+        this.cfrThread = cfrThread;
         this.game = game;
 //        System.out.println("starting...");
     }
@@ -39,8 +39,13 @@ public class Rollouts extends Thread {
         short[] actions = game.legalActions(gameState, history);
         String[] nextHistories = game.nextHistories(gameState, history);
         String key = gameState.cardMap.get(gameState.currentPlayer) + " " + history;
-        float[] strategy = blueprint.get(key);
+        float[] strategy = cfrThread.blueprint.get(key);
+//        System.out.println(key);
         int action_idx = NodeUtils.getAction(strategy);
+//        if (gameState.currentPlayer != updatePlayer){
+//            float[] bias_strategy = bias_strategy(strategy.clone(), actions, bias_index);
+//            action_idx = NodeUtils.getAction(bias_strategy);
+//        }
         GameState newGameState = new GameState(gameState);
         game.applyAction(newGameState, actions[action_idx], gameState.currentPlayer);
         return walkTree(nextHistories[action_idx], newGameState, bias_index);
@@ -62,7 +67,6 @@ public class Rollouts extends Thread {
             }
             return NodeUtils.getStrategy(strategy);
         }
-
         return strategy;
     }
 

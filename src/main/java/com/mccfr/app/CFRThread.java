@@ -11,7 +11,7 @@ import java.util.concurrent.*;
 
 public class CFRThread {
 
-    public Map<String, Node> p1_nodeMap = new ConcurrentHashMap<>();
+    public Map<String, float[]> depthRegrets = new ConcurrentHashMap<>();
     public Map<String, float[]> regretSum = new ConcurrentHashMap<>();
     public Map<String, float[]> strategySum = new ConcurrentHashMap<>();
     public final Map<String, String[]> nextHistories = new ConcurrentHashMap<>();
@@ -27,6 +27,7 @@ public class CFRThread {
         runningScore.put('f', new HashMap<>());
         runningScore.put('t', new HashMap<>());
         runningScore.put('r', new HashMap<>());
+        blueprint = Databases.loadBlueprint("Leduc.json");
         System.out.println("loaded");
     }
 
@@ -40,7 +41,8 @@ public class CFRThread {
         long startTime = System.currentTimeMillis();
         for (int i = 0; i < n_threads; i++) {
             System.out.println("starting here");
-            MCCFR vevCfr = new MCCFR(this, game);
+            DepthLimited vevCfr = new DepthLimited(this, game);
+//            MCCFR vevCfr = new MCCFR(this, game);
 //            vevCfr.startintState(history, gameState, allReaches, 50000, depthLimited);
             service.execute(vevCfr);
         }

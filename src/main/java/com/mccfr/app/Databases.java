@@ -9,10 +9,14 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Paths;
+import java.text.DecimalFormat;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
 public class Databases {
+
+    private static final DecimalFormat df = new DecimalFormat("0.00");
     public static void writeBlueprint(CFRThread cfrThread) {
         TreeMap<String, float[]> writeMap = new TreeMap<>();
 //        TreeMap<String, JSONObject> writeMap = new TreeMap<>();
@@ -21,7 +25,7 @@ public class Databases {
             ObjectMapper mapper = new ObjectMapper();
             for (String k : cfrThread.strategySum.keySet()) {
                 float[] stratSum = cfrThread.strategySum.get(k);
-                stratSum = NodeUtils.getAverageStrategy(stratSum);
+                stratSum = trim(NodeUtils.getAverageStrategy(stratSum));
                 writeMap.put(k, stratSum);
             }
             // convert book map to JSON file
@@ -31,26 +35,33 @@ public class Databases {
         }
     }
 
-    public static Map<String, float[]> loadBlueprint(String filePath){
+    public static HashMap<String, float[]> loadBlueprint(String filePath){
         Gson gson = new Gson();
-        Type type = new TypeToken<Map<String, float[]>>(){}.getType();
-        Map<String, float[]> map = null;
+        Type type = new TypeToken<HashMap<String, float[]>>(){}.getType();
+        HashMap<String, float[]> map = null;
         try (FileReader reader = new FileReader(filePath)) {
             map = gson.fromJson(reader, type);
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return map;
+    }
 
-        if (map != null) {
-            for (Map.Entry<String, float[]> entry : map.entrySet()) {
-                System.out.println("Key = " + entry.getKey());
-                System.out.print("Values = ");
-                for (float value : entry.getValue()) {
-                    System.out.print(value + " ");
-                }
-                System.out.println();
+    private static float[] trim(float[] array){
+        float[] finalArr = new float[array.length];
+        for (int i = 0; i < array.length; i++) {
+            if(array[i] < 0.05){
+                array[i] = 0;
             }
         }
-        return map;
+        // Renormalize
+        float normalizingSum = 0;
+        for (float v : array) {
+            normalizingSum += v;
+        }
+        for (int i = 0; i < array.length; i++) {
+            finalArr[i] = Float.parseFloat(df.format(array[i] / normalizingSum));
+        }
+        return finalArr;
     }
 }
